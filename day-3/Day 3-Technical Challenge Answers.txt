@@ -1,0 +1,43 @@
+
+Name and Surname: Iyanuloluwa Emmanuel
+Mail: e.iyanuloluwa@gmail.com
+Cluster ID: i-054d76535a33c0efc
+Practical: 
+Scripts: 
+sudo su- hadoop
+aws s3 cp --recursive s3://amazon-reviews-pds/tsv/ .
+aws s3 ls --summarize --recursive --human-readable s3://amazon-reviews-pds/tsv/
+
+Challenge-1 Answer: HIVE
+CREATE EXTERNAL TABLE amazon_reviews_parquet( marketplace string, customer_id string, review_id string, product_id string, product_parent string, product_title string, star_rating int, helpful_votes int, total_votes int, vine string, verified_purchase string, review_headline string, review_body string, year int) PARTITIONED BY (product_category string) ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe' STORED AS INPUTFORMAT 'org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat' OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat' LOCATION 's3://amazon-reviews-pds/parquet/';
+msck repair table amazon_reviews_parquet;
+
+SELECT product_title, count(review_id) review_count FROM amazon_reviews_parquet GROUP BY product_title ORDER BY review_count  desc limit 1;
+RESULT: Candy Crush Saga        110001
+SELECT product_title, review_count, ROW_NUMBER() OVER(ORDER BY review_count) row_num from (SELECT product_title, count(review_id) review_count FROM amazon_reviews_parquet group by product_title order by review_count desc) a) where row_num=5;
+SELECT product_title, max(star_rating) best_star_rating, year FROM amazon_reviews_parquet GROUP BY product_title, year order by year limit 1;
+RESULT Candy Crush Saga
+CREATE EXTERNAL TABLE amazon_reviews_tsv( marketplace string, customer_id string, review_id string, product_id string, product_parent string, product_title string, star_rating int, helpful_votes int, total_votes int, vine string, verified_purchase string, review_headline string, review_body string, year int) PARTITIONED BY (product_category string) ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t' STORED AS TEXTFILE LOCATION 's3://amazon-reviews-pds/tsv/';
+                
+Challenge-2 Answer: HDFS
+The mapreduce job created 1 map and 3 reducers
+2. hdfs dfs -setrep 3 /user/hadoop/
+
+3. hdfs fsck /user/hadoop/
+    It will not work on it because the default replication has not been set yet.
+    This is because the job returned 100.0% for under replicated blocks, thereby replication did not occur successfully.
+
+4. hdfs dfs -setrep -w 3 /user/hadoop/
+
+5. hdfs dfs -setrep -w 1 /user/hadoop/
+
+7. hdfs fsck /user/hadoop/
+Questions:
+
+Apache Spark will provide better performance because it processes data in-memory, while Hive and MapReduce run on Hadoop and processes data in storage. Getting results of data stored in memory is usually faster, giving spark a better performance thereby running a wordcount on the dataset is fastest using spark framework, when compared with Hive and Mapreduce.
+Apache Spark will provide better performance because it processes data in-memory, while Hive and MapReduce run on Hadoop and processes data in storage. Getting results of data stored in memory is usually faster, giving spark a better performance when running distinct count on the actor2name column in the dataset.
+Storing as CSV is better when storing the data in structured format and to make it easily human readable
+Parquet will provide the best performance due to the fact that parquet is the fastest to read and its optimized for better storage and performance because of the way it stores data using a self-described format of storing each file containing the metadata and data.
+Yes, compression will help reduce the data size.
+
+
